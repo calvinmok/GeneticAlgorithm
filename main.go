@@ -69,11 +69,11 @@ func (me *individual) updateFitness() {
    }
 }
 
-func crossover(allIndividual []individual) individual {
+func crossover(allIndividual []individual, allIndex []int) individual {
    result := individual { allGene: make([]gene, geneLength) }
    
    for i := 0; i < geneLength; i++ {
-      index := rand.Intn(len(allIndividual))
+      index := allIndex[rand.Intn(len(allIndex))]
       result.allGene[i] = allIndividual[index].allGene[i]
    }
    
@@ -114,9 +114,15 @@ func (me *population) sortFitness() {
 func (me *population) selection() {
    me.sortFitness()
 
-   alpha := me.allIndividual[me.size() - 1]
-   index := rand.Intn(me.size() / 2)
-   me.allIndividual[index] = crossover([]individual { alpha, me.allIndividual[index] })
+   alphaFitness := me.allIndividual[me.size() - 1].fitness
+   alphaCount := 0
+   for _, i := range me.allIndividual {
+      if i.fitness >= alphaFitness { alphaCount += 1 }
+   }
+   
+   a := me.size() - rand.Intn(alphaCount) - 1
+   b := rand.Intn(me.size() - alphaCount - 1)
+   me.allIndividual[b] = crossover(me.allIndividual, []int { a, b })
 }
 
 
