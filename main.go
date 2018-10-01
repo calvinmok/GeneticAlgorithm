@@ -15,11 +15,15 @@ func main() {
    
    p := createPopulation(10)
    
-   for i := 0; i < 1000; i++ {
+   for i := 0; i < 100; i++ {
       p.selection()
    }
    
-   fmt.Println(p.allIndividual)
+   p.sortFitness()
+   
+   for _, i := range p.allIndividual {
+      fmt.Println(i)
+   }
 }
 
 
@@ -43,6 +47,7 @@ func (me *gene) mutation() {
 
 type individual struct {
    allGene []gene
+   fitness int
 }
 
 func createIndividual() individual {
@@ -52,31 +57,16 @@ func createIndividual() individual {
       result.allGene[i] = createGene()
    }
    
+   result.updateFitness();
+
    return result
 }
 
-func (me individual) clone() individual {
-   result := individual { allGene: make([]gene, geneLength) }
-   
-   for i := 0; i < geneLength; i++ {
-      result.allGene[i] = me.allGene[i]
-   }
-   
-   return result
-}
-
-func (me *individual) fitness() int {
-   fitness := 0
+func (me *individual) updateFitness() {
+   me.fitness = 0
    for _, g := range me.allGene {
-      fitness += g.value
+      me.fitness += g.value
    }
-   
-   return fitness
-}
-
-func (me *individual) mutation() {
-   index := rand.Intn(len(me.allGene))
-   me.allGene[index].mutation()
 }
 
 func crossover(allIndividual []individual) individual {
@@ -86,9 +76,16 @@ func crossover(allIndividual []individual) individual {
       index := rand.Intn(len(allIndividual))
       result.allGene[i] = allIndividual[index].allGene[i]
    }
-
+   
+   index := rand.Intn(len(result.allGene))
+   result.allGene[index].mutation()
+   
+   result.updateFitness();
+   
    return result
 }
+
+
 
 
 
@@ -108,19 +105,18 @@ func createPopulation(size int) population {
 
 func (me population) size() int { return len(me.allIndividual) }
 
-func (me *population) selection() {
+func (me *population) sortFitness() {
    sort.Slice(me.allIndividual, func(i, j int) bool {
-      return me.allIndividual[i].fitness() < me.allIndividual[j].fitness()
+      return me.allIndividual[i].fitness < me.allIndividual[j].fitness
    })
-   
-   index := rand.Intn(me.size() - 1)
+}
+
+func (me *population) selection() {
+   me.sortFitness()
 
    alpha := me.allIndividual[me.size() - 1]
-   
-   offspring := crossover([]individual { alpha, me.allIndividual[index] })
-   offspring.mutation()
-
-   me.allIndividual[index] = offspring
+   index := rand.Intn(me.size() / 2)
+   me.allIndividual[index] = crossover([]individual { alpha, me.allIndividual[index] })
 }
 
 
